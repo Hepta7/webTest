@@ -1,12 +1,70 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
-    <meta charset="UTF-8">
-    <meta http-equiv="X-UA-Compatible" content="IE=edge">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Document</title>
 </head>
+
 <body>
-    小磊jfklajsdfjalk
+    <input type="file" id="fileInput" />
+    <button onclick="sendFile()">Send File</button>
 </body>
+<script src="./mqtt-4.3.7.js"></script>
+<script>
+    // 连接选项
+    const options = {
+        clea: true,
+        clientI: "emqx_MjIyMz",
+        connectTimeout: 10000,
+        keepalive: 60,
+        protocolVersion: 5,
+        reconnectPeriod: 4000,
+        resubscribe: true,
+        topicAliasMaximum: undefined,
+    };
+
+    const brokerUrl = "ws://192.168.0.108:8083/mqtt";
+    const client = mqtt.connect(brokerUrl, options);
+
+    function sendFile() {
+        const fileInput = document.getElementById('fileInput');
+        const file = fileInput.files[0];
+        if (!file) {
+            alert('Please select a file first.');
+            return;
+        }
+
+        const reader = new FileReader();
+
+        reader.readAsText(file); // 读取文件内容作为文本
+
+        reader.onload = function (event) {
+
+            const fileContent = event.target.result;
+
+            console.log('Connected to MQTT broker');
+
+            client.publish("fileSend", fileContent);
+
+        };
+
+    }
+
+
+    client.on("reconnect", (error) => {
+        console.log("正在重连:", error);
+    });
+
+    client.on("error", (error) => {
+        console.log("连接失败:", error);
+    });
+
+    client.on("message", (topic, message) => {
+        console.log("收到消息：", topic, message.toString());
+    });
+
+</script>
+
 </html>
